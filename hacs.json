@@ -1,0 +1,5 @@
+{
+    "name": "__GITHUB_CARD_NAME__",
+    "render_readme": true,
+    "filename": "__GITHUB_CARD_NAME__.js"
+}

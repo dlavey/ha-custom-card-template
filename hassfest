@@ -1,0 +1,19 @@
+#!/bin/bash
+
+HA_SRC="/usr/src/homeassistant"
+
+if [[ ! -d "${HA_SRC}" ]]; then
+    echo "Cloning Home Assistant source for hassfest validation..."
+    git clone --depth 1 https://github.com/home-assistant/core.git "${HA_SRC}"
+fi
+
+if [[ ! -d "/config/custom_components" ]]; then
+    echo "No custom_components directory found at /config/custom_components, nothing to validate."
+    exit 0
+fi
+
+cd "${HA_SRC}"
+for integration in $(find /config/custom_components -mindepth 1 -maxdepth 1 -type d); do
+    echo "Validating ${integration}..."
+    python3 -m script.hassfest --action validate --integration-path "${integration}"
+done
