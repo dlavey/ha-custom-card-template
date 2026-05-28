@@ -1,0 +1,125 @@
+#!/bin/bash
+
+function ensure_hass_config() {
+    hass --script ensure_config -c /config
+}
+
+function create_hass_user() {
+    local username="${HASS_USERNAME:-dev}"
+    local password="${HASS_PASSWORD:-dev}"
+    echo "Creating Home Assistant user ${username}"
+    hass --script auth -c /config add "${username}" "${password}"
+}
+
+function bypass_onboarding() {
+    mkdir -p /config/.storage
+    cat > /config/.storage/onboarding << 'EOF'
+{
+    "data": {
+        "done": [
+            "user",
+            "core_config",
+            "integration"
+        ]
+    },
+    "key": "onboarding",
+    "version": 3
+}
+EOF
+}
+
+function install_hacs() {
+    local hacs_dir="/config/custom_components/hacs"
+    local hacs_manifest="${hacs_dir}/manifest.json"
+
+    echo "Checking HACS version..."
+    local latest_version
+    latest_version=$(curl -sf "https://api.github.com/repos/hacs/integration/releases/latest" \
+        | python3 -c "import sys, json; print(json.load(sys.stdin)['tag_name'])" 2>/dev/null || true)
+
+    if [[ -z "${latest_version}" ]]; then
+        echo "Warning: Could not determine latest HACS version (network issue or API rate limit). Installing via get.hacs.xyz..."
+        curl -sfSL https://get.hacs.xyz | bash -
+        return
+    fi
+
+    if [[ -f "${hacs_manifest}" ]]; then
+        local installed_version
+        installed_version=$(python3 -c "import json; print(json.load(open('${hacs_manifest}'))['version'])" 2>/dev/null || true)
+        if [[ "${installed_version}" == "${latest_version}" ]]; then
+            echo "HACS ${installed_version} is already up to date, skipping download"
+            return
+        fi
+        echo "Updating HACS from ${installed_version} to ${latest_version}"
+    else
+        echo "Installing HACS ${latest_version}"
+    fi
+
+    mkdir -p "${hacs_dir}"
+    curl -sL "https://github.com/hacs/integration/releases/download/${latest_version}/hacs.zip" \
+        -o /tmp/hacs.zip
+    unzip -oq /tmp/hacs.zip -d "${hacs_dir}"
+    rm -f /tmp/hacs.zip
+    echo "HACS ${latest_version} installed"
+}
+
+function install_lovelace_resources() {
+    local resources=()
+
+    if [[ -n "${LOVELACE_LOCAL_FILES:-}" ]]; then
+        mkdir -p /config/www/workspace
+        for file in ${LOVELACE_LOCAL_FILES}; do
+            resources+=("/local/workspace/${file}")
+        done
+    fi
+
+    if [[ -n "${LOVELACE_REMOTE_FILES:-}" ]]; then
+        for url in ${LOVELACE_REMOTE_FILES}; do
+            resources+=("${url}")
+        done
+    fi
+
+    if [[ ${#resources[@]} -eq 0 ]]; then
+        return
+    fi
+
+    mkdir -p /config/.storage
+    python3 - "${resources[@]}" << 'PYEOF'
+import sys, json
+
+urls = sys.argv[1:]
+items = [{"id": str(i + 1), "type": "module", "url": url} for i, url in enumerate(urls)]
+storage = {"data": {"items": items}, "key": "lovelace_resources", "version": 1}
+with open("/config/.storage/lovelace_resources", "w") as f:
+    json.dump(storage, f, indent=4)
+PYEOF
+}
+
+function setup() {
+    ensure_hass_config
+    create_hass_user
+    bypass_onboarding
+    install_hacs
+    install_lovelace_resources
+}
+
+function run() {
+    hass -c /config -v
+}
+
+if [[ -f "${ENV_FILE:-}" ]]; then
+    source "${ENV_FILE}"
+fi
+
+case "${1:-}" in
+    setup)
+        setup
+        ;;
+    launch)
+        run
+        ;;
+    *)
+        setup
+        run
+        ;;
+esac
