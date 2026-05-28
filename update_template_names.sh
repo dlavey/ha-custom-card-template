@@ -10,12 +10,11 @@ CARD_NAME=`git config get remote.origin.url | sed 's/https:\/\/github.com\///' |
 #echo $REPOSITORY_NAME
 #echo $CARD_NAME
 
-sed -i "s/__GITHUB_CARD_NAME__/$CARD_NAME/g" .devcontainer/devcontainer.json hacs.json README.md rollup.config.js rollup.config.dev.js package.json
+sed -i -e "s/__GITHUB_CARD_NAME__/$CARD_NAME/g" .devcontainer/devcontainer.json hacs.json README.md rollup.config.js rollup.config.dev.js package.json
 
-#mv src/ha-custom-card-template.ts src/$CARD_NAME.ts
+mv src/ha-custom-card-template.ts src/$CARD_NAME.ts
 
-
-sed -i "s/__GITHUB_AUTHOR_NAME__/$AUTHOR_NAME/g" package.json
-sed -i "s;__GITHUB_REPO__;$REPOSITORY_NAME;g" package.json
+sed -i -e "s/__GITHUB_AUTHOR_NAME__/$AUTHOR_NAME/g" package.json
+sed -i -e "s;__GITHUB_REPO__;$REPOSITORY_NAME;g" package.json
 
 echo "DONE"
