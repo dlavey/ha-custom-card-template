@@ -1,6 +1,6 @@
 /node_modules/
 /.rpt2_cache/
-/dist/*
+/dist/*.js
 homeassistant/
 .devcontainer/config/.storage/
 .devcontainer/config/tts/
