@@ -19,7 +19,6 @@ RUN rm -f /etc/apt/sources.list.d/yarn.list \
         ffmpeg \
         liblapack3 \
         liblapack-dev \
-        libatlas-base-dev \
         git \
         libpcap-dev \
         unzip \
@@ -28,6 +27,7 @@ RUN rm -f /etc/apt/sources.list.d/yarn.list \
     && source /usr/local/share/nvm/nvm.sh \
     && nvm install --lts \
     && pip install --upgrade wheel pip uv \
+    && npm install -g corepack \
     && corepack enable
 
 #COPY --from=ghcr.io/alexxit/go2rtc:latest /usr/local/bin/go2rtc /bin/go2rtc
