@@ -34,7 +34,7 @@
     "DEVCONTAINER": "1",
     "HASS_USERNAME": "dev",
     "HASS_PASSWORD": "dev",
-    "LOVELACE_REMOTE_FILES": "http://localhost:5000/__GITHUB_CARD_NAME__.js"
+    "LOVELACE_REMOTE_FILES": "http://127.0.0.1:5000/__GITHUB_CARD_NAME__.js"
   },
 
   // Setup Home Assistant and install dependencies
