@@ -1,4 +1,5 @@
-FROM mcr.microsoft.com/devcontainers/python:
+FROM mcr.microsoft.com/devcontainers/python
+#:1-3.15
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
